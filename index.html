@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skip-Bo Scorekeeper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="wrap">
+    <div class="brand"><span class="pips" aria-hidden="true"><span style="background:var(--blue)"></span><span style="background:var(--green)"></span><span style="background:var(--red)"></span><span style="background:var(--orange)"></span></span>Kitchen Table Skip-Bo League</div>
+    <nav aria-label="Sections">
+      <a href="#play">Scorekeeper</a>
+      <a href="#standings">Standings</a>
+      <a href="#past">Past games</a>
+      <a href="#rules">Rules</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" id="play">
+
+  <!-- 1. Setup -->
+  <section id="setup" class="setup hidden" style="border-top:0">
+    <div>
+      <div class="eyebrow">New game</div>
+      <h2>Who's playing?</h2>
+    </div>
+    <div class="field">
+      <label for="gameLabel">Game name</label>
+      <input type="text" id="gameLabel" placeholder="Saturday night" maxlength="40">
+    </div>
+    <div class="field">
+      <label>Players, in seating order</label>
+      <div class="namelist" id="nameList"></div>
+      <button class="btn small" id="addName" type="button">+ Add player</button>
+    </div>
+    <div class="settings">
+      <div class="field">
+        <label for="target">Play to</label>
+        <select id="target">
+          <option value="500">500 points (official)</option>
+          <option value="250">250 points (quick)</option>
+          <option value="1000">1,000 points (long)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="stockSize">Stock pile size</label>
+        <select id="stockSize">
+          <option value="auto">Official (30, or 20 for 5+)</option>
+          <option value="30">30 cards</option>
+          <option value="20">20 cards</option>
+          <option value="10">10 cards (quick)</option>
+        </select>
+      </div>
+    </div>
+    <p class="err" id="setupErr" role="alert"></p>
+    <div class="row"><button class="btn primary" id="startGame" type="button">Deal 'em</button></div>
+  </section>
+
+  <!-- 2. Game -->
+  <div id="game" class="hidden">
+    <div class="hero" style="padding-bottom:24px">
+      <div>
+        <div class="eyebrow" id="gameEyebrow"></div>
+        <h1 id="headline"></h1>
+        <p id="subline"></p>
+      </div>
+      <div class="cardstack" aria-hidden="true" id="heroCard">
+        <div class="ghost g1"></div><div class="ghost g2"></div>
+        <div class="bigcard">
+          <div class="corner tl" id="heroCorner1"></div><div class="center" id="heroCenter"></div><div class="corner br" id="heroCorner2"></div>
+          <div class="ribbon" id="heroRibbon"></div>
+        </div>
+      </div>
+    </div>
+
+    <section id="entrySection">
+      <div class="sechead">
+        <h2 id="entryTitle">Hand 1</h2>
+        <p>Tap who emptied their stock pile first. Then count the cards left in everyone else's stock pile.</p>
+      </div>
+      <form id="entryForm" class="entry" novalidate>
+        <div id="entryRows" class="entry"></div>
+        <p class="preview" id="preview" aria-live="polite"></p>
+        <p class="err" id="entryErr" role="alert"></p>
+        <div class="row">
+          <button class="btn primary" type="submit">Save hand</button>
+          <button class="btn" type="button" id="undoBtn">Undo last hand</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="overSection" class="hidden">
+      <div class="banner" id="banner"></div>
+    </section>
+
+    <section id="standings">
+      <div class="sechead">
+        <h2>Standings</h2>
+        <p id="standingsNote">Highest score leads.</p>
+      </div>
+      <div class="podium" id="podium"></div>
+    </section>
+
+    <section id="ladderSection">
+      <div class="sechead">
+        <h2>Hand by hand</h2>
+        <p>Solid card: won the hand, with points scored. Dashed card: cards still in that player's stock pile.</p>
+      </div>
+      <div class="ladder-scroll"><div class="ladder" id="ladder"></div></div>
+    </section>
+
+    <section id="raceSection">
+      <div class="sechead">
+        <h2>Race to the target</h2>
+        <p>Running score after each hand. The dashed line is the finish.</p>
+      </div>
+      <div class="chartbox">
+        <div class="keyrow" id="chartKey"></div>
+        <svg id="chart" viewBox="0 0 900 360" role="img" aria-label="Line chart of running score by hand"></svg>
+      </div>
+    </section>
+
+    <section>
+      <div class="sechead"><h2>Game tools</h2><p>The game saves in this browser as you go. Export a CSV to keep it for good.</p></div>
+      <div class="row">
+        <button class="btn" type="button" id="exportBtn">Download CSV</button>
+        <button class="btn" type="button" id="copyBtn">Copy CSV</button>
+        <button class="btn danger" type="button" id="newBtn">New game</button>
+      </div>
+    </section>
+  </div>
+
+  <section id="past">
+    <div class="sechead"><h2>Past games</h2><p>Results pages built with the Python builder in this repo.</p></div>
+    <ul class="pastlist" id="pastList">
+      <!-- Add a line per finished game, e.g. <li><a href="results/game-1.html">Game 1: Liz wins</a></li> -->
+    </ul>
+    <p class="empty" id="pastEmpty">No finished games yet. Download the CSV when a game ends and build its page with the Python builder.</p>
+  </section>
+
+  <section id="rules">
+    <div class="sechead">
+      <h2>League rules</h2>
+      <p>The quick version.</p>
+    </div>
+    <div class="rules">
+      <div>
+        <h3>Your piles</h3>
+        <ol class="phaselist">
+          <li><span class="n" style="background:var(--blue)">S</span><span><strong>Stock pile:</strong> face down, top card face up. Empty it first to win the hand. 30 cards each, or 20 with 5+ players.</span></li>
+          <li><span class="n" style="background:var(--green)">H</span><span><strong>Hand:</strong> draw up to 5 cards at the start of each turn.</span></li>
+          <li><span class="n" style="background:var(--red)">B</span><span><strong>Building piles:</strong> 4 shared piles in the middle. Start with a 1 and go up in order to 12, then clear the pile.</span></li>
+          <li><span class="n" style="background:var(--orange)">D</span><span><strong>Discard piles:</strong> 4 of your own. Your turn ends when you discard one card.</span></li>
+        </ol>
+        <ul>
+          <li>Play from your stock pile, hand, or the top of a discard pile onto any building pile.</li>
+          <li>Play all 5 cards from your hand? Draw 5 more and keep going.</li>
+          <li><strong>Skip-Bo cards are wild:</strong> play them as any number, including a 1 to start a pile.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Scoring</h3>
+        <table class="scoretable num">
+          <tbody>
+            <tr><td>Winning the hand</td><td>25</td></tr>
+            <tr><td>Each card left in an opponent's stock pile</td><td>5</td></tr>
+            <tr><td>Everyone else</td><td>0</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>Only the hand winner scores.</li>
+          <li><strong>Example:</strong> opponents have 6 and 9 cards left. The winner scores 25 + 5 × 15 = 100.</li>
+          <li>First player to 500 wins the game.</li>
+          <li>Partners: play from your own and your partner's stock and discard piles.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">The official site of the Kitchen Table Skip-Bo League. A family league, not affiliated with Mattel, which owns the Skip-Bo name.</div>
+</footer>
+
+<div class="dialog hidden" id="confirmDlg" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+  <div class="panel">
+    <p id="confirmText" style="margin:0;font-weight:700"></p>
+    <div class="row"><button class="btn primary" id="confirmYes" type="button">Yes</button><button class="btn" id="confirmNo" type="button">Cancel</button></div>
+  </div>
+</div>
+<div class="toast hidden" id="toast" role="status"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

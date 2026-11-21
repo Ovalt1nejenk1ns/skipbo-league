@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+{# Rendered by build_site.py. Everything inside {{ }} and {% %} comes from the CSV. Styles are shared with the scorekeeper. #}
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ league }} Skip-Bo League · {{ game_label }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="wrap">
+    <div class="brand"><span class="pips" aria-hidden="true"><span style="background:var(--blue)"></span><span style="background:var(--green)"></span><span style="background:var(--red)"></span><span style="background:var(--orange)"></span></span>{{ league }} Skip-Bo League</div>
+    <nav aria-label="Sections">
+      <a href="#standings">Standings</a>
+      <a href="#ladder">Hand by hand</a>
+      <a href="#awards">Awards</a>
+      <a href="{{ scorekeeper_url }}">Scorekeeper</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Official results · {{ game_label }} · Playing to {{ "{:,}".format(game.target) }} · {{ game.hands }} hands</div>
+      <h1><em style="color:{{ head.champ.color }}">{{ head.champ.name }}</em> {{ head.title }}</h1>
+      <p>{{ head.blurb }}</p>
+    </div>
+    {% set big = "{:,}".format(head.champ.total) %}
+    <div class="cardstack" aria-hidden="true" style="--champ:{{ head.champ.color }}">
+      <div class="ghost g1"></div><div class="ghost g2"></div>
+      <div class="bigcard">
+        <div class="corner tl">★</div>
+        <div class="center{{ ' long' if big|length >= 3 }}">{{ big }}</div>
+        <div class="corner br">★</div>
+        <div class="ribbon">{{ "Champion" if head.finished else "Leader" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <section id="standings">
+    <div class="sechead">
+      <h2>Final standings</h2>
+      <p>Highest score wins. First to {{ "{:,}".format(game.target) }} takes it.</p>
+    </div>
+    <div class="podium">
+      {% for p in players %}
+      <article class="pcard" style="--c:{{ p.color }}">
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:10px">
+          <div class="name">{{ p.name }}</div><div class="place">{{ loop.index }}{{ {1:"st",2:"nd",3:"rd"}.get(loop.index, "th") }}</div>
+        </div>
+        <span class="tag">{{ "Reached %s" % "{:,}".format(game.target) if p.total >= game.target else "{:,} short".format(game.target - p.total) }}</span>
+        <dl class="stats num">
+          <dt>Score</dt><dd>{{ "{:,}".format(p.total) }}</dd>
+          <dt>Hands won</dt><dd>{{ p.wins }}</dd>
+          <dt>Best hand</dt><dd>{{ "{:,}".format(p.best) if p.best else "–" }}</dd>
+        </dl>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section id="ladder">
+    <div class="sechead">
+      <h2>Hand by hand</h2>
+      <p>Solid card: won the hand, with points scored. Dashed card: cards still in that player's stock pile.</p>
+    </div>
+    <div class="ladder-scroll"><div class="ladder" style="--hands:{{ game.hands }}">
+      <div></div>
+      {% for h in range(1, game.hands + 1) %}<div class="hh">Hand {{ h }}</div>{% endfor %}
+
+      {% for p in players %}
+      <div class="who" style="color:{{ p.color }}">{{ p.name }}</div>
+      {% for won, left, pts in zip(p.won, p.left, p.points) %}
+      {% if won %}
+      <div class="chip win" style="--c:{{ p.color }};font-size:17px" title="Hand {{ loop.index }}: won, {{ pts }} points">{{ pts }}<small>won</small></div>
+      {% else %}
+      <div class="chip left" style="--c:{{ p.color }}" title="Hand {{ loop.index }}: {{ left }} cards left">{{ left }}<small>left</small></div>
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+    </div></div>
+  </section>
+
+  <section id="race">
+    <div class="sechead">
+      <h2>Race to the target</h2>
+      <p>Running score after each hand. The dashed line is the finish.</p>
+    </div>
+    <div class="chartbox">
+      <div class="keyrow">{% for p in players %}<span style="--c:{{ p.color }}">{{ p.name }}</span>{% endfor %}</div>
+      <svg viewBox="0 0 {{ chart.W }} {{ chart.H }}" role="img" aria-label="Line chart of running score by hand">
+        {% for g in chart.grid %}
+        <line x1="{{ chart.L }}" x2="{{ chart.W - chart.R }}" y1="{{ '%.1f' % g.y }}" y2="{{ '%.1f' % g.y }}" stroke="var(--line)" stroke-width="1"/>
+        <text x="{{ chart.L - 8 }}" y="{{ '%.1f' % (g.y + 4) }}" text-anchor="end">{{ "{:,}".format(g.v) }}</text>
+        {% endfor %}
+        {% for t in chart.xticks %}<text x="{{ '%.1f' % t.x }}" y="{{ chart.H - chart.B + 20 }}" text-anchor="middle">{{ t.label }}</text>{% endfor %}
+
+        <line x1="{{ chart.L }}" x2="{{ chart.W - chart.R }}" y1="{{ '%.1f' % chart.target_y }}" y2="{{ '%.1f' % chart.target_y }}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="6 5"/>
+        <text x="{{ chart.L + 6 }}" y="{{ '%.1f' % (chart.target_y - 6) }}" style="fill:var(--ink);font-weight:700">Finish {{ "{:,}".format(game.target) }}</text>
+        {% for l in chart.lines %}
+        <path d="{{ l.path }}" fill="none" stroke="{{ l.player.color }}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="{{ '%.1f' % l.end[0] }}" cy="{{ '%.1f' % l.end[1] }}" r="5" fill="{{ l.player.color }}"/>
+        {% endfor %}
+        {% for lb in chart.labels %}
+        <text x="{{ chart.label_x }}" y="{{ '%.1f' % (lb.y + 4) }}" style="fill:{{ lb.player.color }};font-weight:700">{{ lb.player.name }} {{ "{:,}".format(lb.player.total) }}</text>
+        {% endfor %}
+      </svg>
+    </div>
+  </section>
+
+  <section id="awards">
+    <div class="sechead">
+      <h2>Game awards</h2>
+      <p>Pulled straight from the score sheet.</p>
+    </div>
+    <div class="awards">
+      {% for a in awards %}
+      <div class="award" style="--c:{{ a.color }}"><div class="big num">{{ a.big }}</div><h3>{{ a.title }}</h3><p>{{ a.text }}</p></div>
+      {% endfor %}
+    </div>
+    <div class="links"><a class="btn primary" href="{{ scorekeeper_url }}">Back to the scorekeeper</a></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">The official site of the {{ league }} Skip-Bo League. A family league, not affiliated with Mattel, which owns the Skip-Bo name.</div>
+</footer>
+</body>
+</html>
