@@ -62,7 +62,7 @@ const PALETTE = ["var(--blue)", "var(--red)", "var(--green)", "var(--orange)", "
 const WIN_BONUS = 25;
 const PER_CARD = 5;
 
-// state = { label, players: [...], target: 500, stock: 30,
+// state = { id, startedAt, label, players: [...], target: 500, stock: 30,
 //           hands: [{ winner: 0, left: [0, 6, 9] }] }   left[winner] is always 0
 let state = load();
 if (state && !state.id) state.id = newGameId("sb"); // games started before auto-save
@@ -80,6 +80,26 @@ function load() {
 function save() {
   if (state) Sync.save(state.id, "skipbo", state);
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch { toast("Couldn't save in this browser. Export a CSV to be safe."); }
+  if (state && window.CloudSync) {
+    // Games started before cloud sync existed get an id the first time they're saved.
+    if (!state.id) { state.id = CloudSync.newId(); state.startedAt = new Date().toISOString(); save(); return; }
+    CloudSync.save(cloudGame());
+  }
+}
+
+// The shape the family scores database expects (see cloud-sync.js).
+function cloudGame() {
+  const totals = state.players.map((_, i) =>
+    state.hands.reduce((sum, h) => sum + (h.winner === i ? handPoints(h) : 0), 0));
+  return {
+    id: state.id, game: "skipbo", label: state.label, started_at: state.startedAt,
+    finished: totals.some((t) => t >= state.target), target: state.target, stock: state.stock,
+    players: state.players,
+    hands: state.hands.map((h, k) => ({
+      no: k + 1,
+      scores: state.players.map((_, i) => ({ points: h.winner === i ? handPoints(h) : 0, won: h.winner === i, left: h.left[i] })),
+    })),
+  };
 }
 
 // ------------------------------------------------------------------ scoring (mirrors builder/build_site.py)
