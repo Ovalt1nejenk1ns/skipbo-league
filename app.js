@@ -375,3 +375,14 @@ $("startGame").onclick = startGame;
 $("pastEmpty").classList.toggle("hidden", $("pastList").children.length > 0);
 
 render();
+
+// On the Game Night server every game is already saved, so point "Past games" at its home page
+// instead of the CSV + builder steps (those still apply on GitHub Pages).
+Sync.ready().then((onServer) => {
+  if (!onServer) return;
+  const past = document.getElementById("past");
+  past.querySelector(".sechead p").textContent = "Every game is saved on the Game Night server automatically.";
+  past.querySelector(".pastlist").insertAdjacentHTML("afterbegin",
+    '<li><a href="/"><strong>See all saved games, winners and CSV downloads</strong></a></li>');
+  document.getElementById("pastEmpty")?.classList.add("hidden");
+});
