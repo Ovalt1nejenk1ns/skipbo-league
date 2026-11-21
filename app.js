@@ -400,6 +400,7 @@ render();
 // instead of the CSV + builder steps (those still apply on GitHub Pages).
 Sync.ready().then((onServer) => {
   if (!onServer) return;
+  document.querySelectorAll("[data-server]").forEach((el) => (el.hidden = false));
   const past = document.getElementById("past");
   past.querySelector(".sechead p").textContent = "Every game is saved on the Game Night server automatically.";
   past.querySelector(".pastlist").insertAdjacentHTML("afterbegin",
