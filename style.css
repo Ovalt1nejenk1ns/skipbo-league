@@ -194,3 +194,5 @@ select{font:inherit;color:var(--ink);background:var(--paper);border:2px solid va
 .stepper input{text-align:center}
 .empty{color:var(--muted);margin:0}
 @media (max-width:760px){.bigcard .center.long{font-size:68px}}
+.deal{margin:0;padding-left:22px;display:grid;gap:8px}
+.deal li::marker{font-family:var(--font-display);font-weight:900;color:var(--blue)}
