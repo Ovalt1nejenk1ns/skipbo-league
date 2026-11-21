@@ -1,9 +1,9 @@
 """Build a Skip-Bo League results page from a game CSV.
 
 Usage:
-    python builder/build_site.py ~/Downloads/game-1.csv --game-label "Game 1"
+    python builder/build_site.py ~/Downloads/game-1.csv --game-label "Game 1" --date 2026-11-21
 
-Writes results/<csv name>.html. The CSV comes from the scorekeeper's
+Writes results/<csv name>.html and saves the game to data/games.db (see db.py). The CSV comes from the scorekeeper's
 "Download CSV" button:
 
     # target=500 stock=30          <- optional settings line
@@ -15,11 +15,14 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+from datetime import date
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
+
+from db import DB_PATH, save_game
 
 HERE = Path(__file__).parent
 WIN_BONUS = 25
@@ -262,10 +265,15 @@ def main() -> None:
     ap.add_argument("--league", default="Kitchen Table", help="League name (default: %(default)s)")
     ap.add_argument("--game-label", default="Game 1", help='Shown in the header, e.g. "Saturday night"')
     ap.add_argument("-o", "--out", type=Path, default=None, help="Default: results/<csv name>.html")
+    ap.add_argument("--date", default=date.today().isoformat(), help="Date played, YYYY-MM-DD (default: today)")
+    ap.add_argument("--no-db", action="store_true", help="Build the page without saving to data/games.db")
     args = ap.parse_args()
 
     out_path = args.out or HERE.parent / "results" / f"{args.csv.stem}.html"
     print(f"Wrote {build(args.csv, out_path, args.league, args.game_label)}")
+    if not args.no_db:
+        save_game(load_game(args.csv), args.csv.stem, args.game_label, args.date)
+        print(f'Saved "{args.game_label}" to {DB_PATH.relative_to(HERE.parent)}')
 
 
 if __name__ == "__main__":
